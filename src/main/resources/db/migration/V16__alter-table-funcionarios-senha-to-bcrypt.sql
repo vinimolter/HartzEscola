@@ -1,0 +1,1 @@
+UPDATE funcionarios SET senha = '$2y$10$T/52BPeumjdiyIwQ7xVguOSgdOEkK..t/I3Nb3YBlgCTAz7tTAyKu';
