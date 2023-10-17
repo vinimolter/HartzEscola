@@ -13,26 +13,25 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import br.com.hartzescola.domain.funcionario.FuncionarioRepository;
+import br.com.hartzescola.domain.usuario.UsuarioRepository;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
 
     @Autowired
-    private TokenServiceAluno tokenService;
+    private TokenService tokenService;
 
     @Autowired
-    private FuncionarioRepository funcionarioRepository;
+    private UsuarioRepository usuarioRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
         var tokenJWT = recuperarToken(request);
 
         if (tokenJWT != null) {
             var subject = tokenService.getSubject(tokenJWT);
-            var usuario = funcionarioRepository.findByEmail(subject);
+            var usuario = usuarioRepository.findByEmail(subject);
 
             var authentication = new UsernamePasswordAuthenticationToken(usuario, null,
                     usuario.getAuthorities());

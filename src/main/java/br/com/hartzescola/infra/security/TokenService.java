@@ -12,8 +12,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 
-import br.com.hartzescola.domain.aluno.Aluno;
-import br.com.hartzescola.domain.funcionario.Funcionario;
+import br.com.hartzescola.domain.usuario.Usuario;
 
 @Service
 public class TokenService {
@@ -21,26 +20,12 @@ public class TokenService {
     @Value("${api.security.token.secret}")
     private String secret;
 
-    public String gerarToken(Funcionario funcionario) {
+    public String gerarToken(Usuario usuario) {
         try {
             var algoritmo = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("API HartzEscola")
-                    .withSubject(funcionario.getUsername())
-                    .withExpiresAt(dataExpiracao())
-                    // .withClaim(id,funcionario.getCargo())
-                    .sign(algoritmo);
-        } catch (JWTCreationException exception) {
-            throw new RuntimeException("erro ao gerrar token jwt", exception);
-        }
-    }
-
-    public String gerarTokenAluno(Aluno aluno) {
-        try { 
-            var algoritmo = Algorithm.HMAC256(secret);
-            return JWT.create()
-                    .withIssuer("API HartzEscola")
-                    .withSubject(aluno.getUsername())
+                    .withSubject(usuario.getUsername())
                     .withExpiresAt(dataExpiracao())
                     // .withClaim(id,funcionario.getCargo())
                     .sign(algoritmo);

@@ -5,6 +5,7 @@ import br.com.hartzescola.domain.endereco.Endereco;
 import br.com.hartzescola.domain.funcionario.salario.DadosAumentoSalario;
 import br.com.hartzescola.domain.funcionario.salario.DadosAlterarContaSalario;
 import br.com.hartzescola.domain.funcionario.salario.Salario;
+import br.com.hartzescola.domain.usuario.Usuario;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +30,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
 
-public class Funcionario implements UserDetails {
+public class Funcionario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,9 +38,6 @@ public class Funcionario implements UserDetails {
     private String nome;
     private String telefone;
     private String cpf;
-    private String email;
-    private boolean ativo;
-    private String senha;
 
     @Enumerated(EnumType.STRING)
     private EnumCargo cargo;
@@ -52,6 +50,11 @@ public class Funcionario implements UserDetails {
     @OneToMany(mappedBy = "professor")
     private List<Curso> cursosMinistrados;
 
+    // Faz a relação um para um entre funcionário e os dados para login no banco
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private Usuario usuario;
+
     public void adicionarProfessorAoCurso(Curso curso) {
         cursosMinistrados.add(curso);
     }
@@ -60,12 +63,13 @@ public class Funcionario implements UserDetails {
         this.nome = dados.nome();
         this.telefone = dados.telefone();
         this.cpf = dados.cpf();
-        this.email = dados.email();
         this.cargo = dados.cargo();
-        this.senha = dados.senha();
         this.endereco = new Endereco(dados.endereco());
         this.salario = new Salario(dados.salario());
-        this.ativo = true;
+    }
+
+        public void setUser(Usuario usuario) {
+        this.usuario = usuario;
     }
 
     public void atualizarInformacoes(@Valid DadosAtualizacaoFuncionario dados) {
@@ -74,9 +78,6 @@ public class Funcionario implements UserDetails {
         }
         if (dados.telefone() != null) {
             this.telefone = dados.telefone();
-        }
-        if (dados.email() != null) {
-            this.email = dados.email();
         }
         if (dados.endereco() != null) {
             this.endereco.atualizarInformacoes(dados.endereco());
@@ -89,61 +90,8 @@ public class Funcionario implements UserDetails {
         }
     }
 
-    public void excluir() {
-        this.ativo = false;
-    }
-
     public void atualizarDadosDaConta(DadosAlterarContaSalario dados) {
-
         this.salario.atualizarInformacoes(dados);
-
     }
 
-    // Metodos para fazer login
-    // Metodo antigo
-    // @Override
-    // public Collection<? extends GrantedAuthority> getAuthorities() {
-    // return List.of(new SimpleGrantedAuthority("ROLE_USER"));
-    // }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (cargo != null) {
-            // Cria a permissão com base no cargo do funcionário
-            return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + cargo.toString()));
-        } else {
-            // Se o funcionário não tiver cargo retorna uma lista vazia sem permissão nenhuma
-            return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public String getPassword() {
-        return senha;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
- 
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
 }

@@ -1,10 +1,13 @@
 package br.com.hartzescola.controller;
 
+import java.util.stream.Collectors;
+
 import javax.validation.Valid;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -25,19 +28,31 @@ import br.com.hartzescola.domain.funcionario.DadosDetalhamentoFuncionario;
 import br.com.hartzescola.domain.funcionario.DadosListagemFuncionario;
 import br.com.hartzescola.domain.funcionario.Funcionario;
 import br.com.hartzescola.domain.funcionario.FuncionarioRepository;
+import br.com.hartzescola.domain.usuario.Usuario;
+import br.com.hartzescola.domain.usuario.UsuarioRepository;
+
 
 @RestController
 @RequestMapping("funcionarios")
 public class FuncionarioController {
 
     @Autowired
-    private FuncionarioRepository repository;
+    private FuncionarioRepository funcionarioRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
     
     @PostMapping
     @Transactional
     public ResponseEntity cadastrar(@RequestBody @Valid DadosCadastroFuncionario dados, UriComponentsBuilder uriBuilder) {
+        var usuario = new Usuario(dados);
         var funcionario = new Funcionario(dados);
-        repository.save(funcionario);
+
+        usuario.setFuncionario(funcionario);
+        funcionario.setUser(usuario);
+        
+        funcionarioRepository.save(funcionario);
+        usuarioRepository.save(usuario);
 
         var uri = uriBuilder.path("/funcionarios/{id}").buildAndExpand(funcionario.getId()).toUri();
 
@@ -46,15 +61,18 @@ public class FuncionarioController {
 
     @GetMapping
     public ResponseEntity <Page<DadosListagemFuncionario>> listar(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao){
-        var page = repository.findAllByAtivoTrue(paginacao).map(DadosListagemFuncionario::new);
+        var page = funcionarioRepository.findAll(paginacao).stream()
+                .filter(funcionario -> funcionario.getUsuario().isAtivo())
+                .map(DadosListagemFuncionario::new)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(new PageImpl<>(page, paginacao, page.size()));
     }
 
     @PutMapping
     @Transactional
     public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoFuncionario dados){
-        var funcionario = repository.getReferenceById(dados.id());
+        var funcionario = funcionarioRepository.getReferenceById(dados.id());
         funcionario.atualizarInformacoes(dados);
 
         return ResponseEntity.ok(new DadosDetalhamentoFuncionario(funcionario));
@@ -63,8 +81,8 @@ public class FuncionarioController {
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity excluir(@PathVariable Long id){
-        var funcionario = repository.getReferenceById(id);
-        funcionario.excluir();
+        var usuario = usuarioRepository.getReferenceById(id);
+        usuario.excluir();
 
         return ResponseEntity.noContent().build();
     }

@@ -1,0 +1,2 @@
+ALTER TABLE alunos
+ADD COLUMN user_id INT;

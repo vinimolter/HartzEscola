@@ -8,7 +8,7 @@ import javax.validation.constraints.Pattern;
 
 import br.com.hartzescola.domain.endereco.DadosEndereco;
 
-public record DadosCadastroAluno(
+public record DadosCadastroAluno( 
     @NotBlank
     @NotNull
     String nome,

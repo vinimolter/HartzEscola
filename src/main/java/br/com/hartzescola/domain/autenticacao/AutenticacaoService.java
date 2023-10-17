@@ -6,33 +6,23 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import br.com.hartzescola.domain.aluno.AlunoRepository;
-import br.com.hartzescola.domain.funcionario.FuncionarioRepository;
+import br.com.hartzescola.domain.usuario.UsuarioRepository;
 
 @Service
 public class AutenticacaoService implements UserDetailsService{
 
     @Autowired
-    private FuncionarioRepository funcionarioRepository;
-
-    @Autowired
-    private AlunoRepository alunoRepository;
+    private UsuarioRepository usuarioRepository;
 
    @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        UserDetails funcionario = funcionarioRepository.findByEmail(email);
+        UserDetails user = usuarioRepository.findByEmail(email);
 
-        if (funcionario != null) {
-            return funcionario;
+        if (user != null) {
+            return user;
         } else {
-            UserDetails aluno = alunoRepository.findByEmail(email);
-
-            if (aluno != null) {
-                return aluno;
-            } else {
                 throw new UsernameNotFoundException("E-mail não encontrado: " + email);
-            }
         }
     }
 }

@@ -1,9 +1,12 @@
 package br.com.hartzescola.controller;
 
+import java.util.stream.Collectors;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -24,36 +27,50 @@ import br.com.hartzescola.domain.aluno.DadosAtualizacaoAluno;
 import br.com.hartzescola.domain.aluno.DadosCadastroAluno;
 import br.com.hartzescola.domain.aluno.DadosDetalhamentoAluno;
 import br.com.hartzescola.domain.aluno.DadosListagemAluno;
+import br.com.hartzescola.domain.usuario.Usuario;
+import br.com.hartzescola.domain.usuario.UsuarioRepository;
 
 @RestController
 @RequestMapping("alunos")
 public class AlunoController {
 
     @Autowired
-    private AlunoRepository repository;
+    private AlunoRepository alunoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @PostMapping
     @Transactional
-    public ResponseEntity cadastrar(@RequestBody @Valid DadosCadastroAluno dados, UriComponentsBuilder uriBuilder) {
-    var aluno = new Aluno(dados);
-    repository.save(aluno);
+    public ResponseEntity cadastrar (@RequestBody @Valid DadosCadastroAluno dados, UriComponentsBuilder uriBuilder) {
+        Usuario usuario = new Usuario(dados);
+        Aluno aluno = new Aluno(dados);
 
-    var uri = uriBuilder.path("/alunos/{id}").buildAndExpand(aluno.getId()).toUri();
+        usuario.setAluno(aluno);
+        aluno.setUsuario(usuario);
 
-    return ResponseEntity.created(uri).body(new DadosDetalhamentoAluno(aluno)); 
+        alunoRepository.save(aluno);
+        usuarioRepository.save(usuario);
+
+        var uri = uriBuilder.path("/alunos/{id}").buildAndExpand(aluno.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(new DadosDetalhamentoAluno(aluno));
     }
 
     @GetMapping
-    public ResponseEntity<Page<DadosListagemAluno>> listar(@PageableDefault(size = 10, sort = { "nome" }) Pageable paginacao) {
-        var page = repository.findAllByAtivoTrue(paginacao).map(DadosListagemAluno::new);
+    public ResponseEntity<Page<DadosListagemAluno>> listar (@PageableDefault(size = 10, sort = { "nome" }) Pageable paginacao) {
+        var page = alunoRepository.findAll(paginacao).stream()
+                .filter(aluno -> aluno.getUsuario().isAtivo())
+                .map(DadosListagemAluno::new)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(new PageImpl<>(page, paginacao, page.size()));
     }
 
     @PutMapping
     @Transactional
-    public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoAluno dados){
-        var aluno = repository.getReferenceById(dados.id());
+    public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoAluno dados) {
+        var aluno = alunoRepository.getReferenceById(dados.id());
         aluno.atualizarInformacoes(dados);
 
         return ResponseEntity.ok(new DadosDetalhamentoAluno(aluno));
@@ -62,11 +79,11 @@ public class AlunoController {
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity excluir(@PathVariable Long id){
-        var aluno = repository.getReferenceById(id);
-        aluno.excluir();
+        var usuario = usuarioRepository.getReferenceById(id);
+        usuario.excluir();
 
-        return ResponseEntity.noContent().build(); 
+        return ResponseEntity.noContent().build();
     }
 
-
 }
+

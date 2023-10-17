@@ -18,6 +18,8 @@ import br.com.hartzescola.domain.aluno.AlunoRepository;
 import br.com.hartzescola.domain.curso.relacao.CursoAluno;
 import br.com.hartzescola.domain.curso.relacao.CursoAlunoRepository;
 import br.com.hartzescola.domain.matricula.DadosDetalhamentoMatricula;
+import br.com.hartzescola.domain.usuario.Usuario;
+import br.com.hartzescola.domain.usuario.UsuarioRepository;
 
 @RestController
 public class MatriculasAlunoController { 
@@ -27,6 +29,9 @@ public class MatriculasAlunoController {
 
     @Autowired
     private CursoAlunoRepository cursoAlunoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
     
     @GetMapping("/{id}")
     @RequestMapping("matriculasaluno")
@@ -44,23 +49,20 @@ public class MatriculasAlunoController {
 
     }
 
-
-    //@GetMapping("/{id}")
+    @GetMapping
     @RequestMapping("meuscursos")
-    public ResponseEntity buscaCursosDoAluno(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id, @PageableDefault(size = 10, sort = {}) Pageable paginacao) {
-    System.out.println("TESTE");
+    public ResponseEntity buscaCursosDoAluno(@AuthenticationPrincipal UserDetails userDetails, @PageableDefault(size = 10, sort = {}) Pageable paginacao) {
     if (userDetails == null) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-    System.out.println("TESTE");
     String username = userDetails.getUsername();
 
-    Aluno aluno = alunoRepository.findAlunoByEmail(username);
+    Usuario usuario = usuarioRepository.findUsuarioByEmail(username);
 
-        if (aluno == null) {
+        if (usuario == null) {
             return ResponseEntity.notFound().build(); 
         }
-        
+        Aluno aluno = usuario.getAluno();
         Page<CursoAluno> cursoAlunoPage = cursoAlunoRepository.findAllByAluno(aluno, paginacao);
         Page<DadosDetalhamentoMatricula> detalhamentoPage = cursoAlunoPage.map(DadosDetalhamentoMatricula::new);
 
