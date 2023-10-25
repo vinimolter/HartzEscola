@@ -29,6 +29,7 @@ public class SecutiryConfigurations {
                 .addFilterBefore(SecurityFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeRequests(requests -> requests
                         .antMatchers(HttpMethod.POST, "/login").permitAll()
+                        .antMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         //PERMISSÕES DE CADA ENDPOINT
                         .antMatchers(HttpMethod.POST,"/alunos").hasAnyRole("DIRETOR", "COORDENADOR")
                         .antMatchers(HttpMethod.GET,"/alunos").hasAnyRole("DIRETOR", "COORDENADOR", "PROFESSOR")

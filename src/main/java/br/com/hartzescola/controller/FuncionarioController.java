@@ -4,7 +4,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -31,7 +30,6 @@ import br.com.hartzescola.domain.funcionario.FuncionarioRepository;
 import br.com.hartzescola.domain.usuario.Usuario;
 import br.com.hartzescola.domain.usuario.UsuarioRepository;
 
-
 @RestController
 @RequestMapping("funcionarios")
 public class FuncionarioController {
@@ -41,16 +39,17 @@ public class FuncionarioController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
-    
+
     @PostMapping
     @Transactional
-    public ResponseEntity cadastrar(@RequestBody @Valid DadosCadastroFuncionario dados, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity cadastrar(@RequestBody @Valid DadosCadastroFuncionario dados,
+            UriComponentsBuilder uriBuilder) {
         var usuario = new Usuario(dados);
         var funcionario = new Funcionario(dados);
 
         usuario.setFuncionario(funcionario);
         funcionario.setUser(usuario);
-        
+
         funcionarioRepository.save(funcionario);
         usuarioRepository.save(usuario);
 
@@ -60,7 +59,8 @@ public class FuncionarioController {
     }
 
     @GetMapping
-    public ResponseEntity <Page<DadosListagemFuncionario>> listar(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao){
+    public ResponseEntity<Page<DadosListagemFuncionario>> listar(
+            @PageableDefault(size = 10, sort = { "nome" }) Pageable paginacao) {
         var page = funcionarioRepository.findAll(paginacao).stream()
                 .filter(funcionario -> funcionario.getUsuario().isAtivo())
                 .map(DadosListagemFuncionario::new)
@@ -71,16 +71,19 @@ public class FuncionarioController {
 
     @PutMapping
     @Transactional
-    public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoFuncionario dados){
+    public ResponseEntity atualizar(@RequestBody @Valid DadosAtualizacaoFuncionario dados) {
         var funcionario = funcionarioRepository.getReferenceById(dados.id());
+        var usuario = funcionario.getUsuario();
+
         funcionario.atualizarInformacoes(dados);
+        usuario.atualizarEmail(dados);
 
         return ResponseEntity.ok(new DadosDetalhamentoFuncionario(funcionario));
     }
 
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity excluir(@PathVariable Long id){
+    public ResponseEntity excluir(@PathVariable Long id) {
         var usuario = usuarioRepository.getReferenceById(id);
         usuario.excluir();
 

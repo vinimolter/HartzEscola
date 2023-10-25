@@ -1,26 +1,20 @@
 package br.com.hartzescola.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import br.com.hartzescola.domain.usuario.UsuarioRepository;
 
 @RestController
 @RequestMapping("/hello")
 public class HelloController {
 
-    // // @Autowired
-    // // private UsuarioRepository usuarioRepository;
-
-    // // @GetMapping("/{id}")
-    public void olaMundo() {
-        System.out.println("TESTEEEE");
+    @GetMapping
+    public void olaMundo(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            System.out.println("USUARIO VAZIO");
+        }
+        System.out.println("AUTORIDADE: " + userDetails.getAuthorities());
     }
-    // // long testeVar = 17;
-    // // System.out.println("TESTE: " + usuarioRepository.findById(testeVar));
-    // }
-
 }
